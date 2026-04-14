@@ -1,0 +1,886 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ADA Ingress/Egress Analysis — Human Factors Field Study</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&family=Oswald:wght@300;400;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js"></script>
+<style>
+:root {
+  --ink: #1c1208;
+  --paper: #f5ede0;
+  --paper-dark: #e8d9c4;
+  --sienna: #8b3a1a;
+  --amber: #c8850a;
+  --gold: #d4a843;
+  --rust: #b54a1f;
+  --olive: #5a6630;
+  --cream: #faf4ea;
+  --rule: #8b3a1a44;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  background: var(--paper);
+  color: var(--ink);
+  font-family: 'Libre Baskerville', Georgia, serif;
+  font-size: 17px;
+  line-height: 1.75;
+  overflow-x: hidden;
+}
+
+body::before {
+  content: '';
+  position: fixed; inset: 0; z-index: 9999;
+  pointer-events: none;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+  opacity: 0.4;
+}
+
+/* MASTHEAD */
+.masthead {
+  background: var(--ink);
+  color: var(--paper);
+  padding: 12px 40px;
+  display: flex; align-items: center; justify-content: space-between;
+  border-bottom: 4px solid var(--amber);
+}
+.masthead-vol {
+  font-family: 'Oswald', sans-serif;
+  font-size: 11px; letter-spacing: 0.15em;
+  text-transform: uppercase; opacity: 0.7;
+}
+.masthead-title {
+  font-family: 'Playfair Display', serif;
+  font-size: 13px; font-weight: 400;
+  letter-spacing: 0.05em; opacity: 0.85;
+}
+
+/* HERO */
+.cover {
+  background: var(--ink);
+  color: var(--paper);
+  position: relative;
+  overflow: hidden;
+  min-height: 560px;
+  display: grid;
+  grid-template-columns: 1fr 480px;
+}
+
+.cover-text {
+  padding: 60px 50px 60px 60px;
+  display: flex; flex-direction: column; justify-content: center;
+  position: relative; z-index: 2;
+}
+
+.cover-eyebrow {
+  font-family: 'Oswald', sans-serif;
+  font-size: 11px; letter-spacing: 0.25em;
+  text-transform: uppercase; color: var(--amber);
+  margin-bottom: 18px;
+  display: flex; align-items: center; gap: 12px;
+}
+.cover-eyebrow::before {
+  content: ''; display: block;
+  width: 32px; height: 2px; background: var(--amber);
+}
+
+.cover-headline {
+  font-family: 'Playfair Display', serif;
+  font-size: clamp(36px, 5vw, 62px);
+  font-weight: 900; line-height: 1.05;
+  margin-bottom: 24px; letter-spacing: -0.01em;
+}
+.cover-headline em { font-style: italic; color: var(--gold); }
+
+.cover-deck {
+  font-family: 'Libre Baskerville', serif;
+  font-size: 16px; line-height: 1.65;
+  opacity: 0.82; max-width: 480px; margin-bottom: 32px;
+}
+
+.cover-byline {
+  font-family: 'Oswald', sans-serif;
+  font-size: 12px; letter-spacing: 0.12em;
+  text-transform: uppercase; opacity: 0.6;
+  border-top: 1px solid rgba(255,255,255,0.2);
+  padding-top: 16px;
+}
+
+/* HERO IMAGE PANEL */
+.cover-hero-img {
+  position: relative;
+  overflow: hidden;
+  border-left: 3px solid var(--amber);
+}
+.cover-hero-img img {
+  width: 100%; height: 100%;
+  object-fit: cover;
+  display: block;
+  filter: sepia(20%) contrast(1.05) brightness(0.92);
+}
+.cover-hero-img::after {
+  content: '';
+  position: absolute; inset: 0;
+  background: linear-gradient(to right, rgba(28,18,8,0.35) 0%, transparent 40%);
+  pointer-events: none;
+}
+.hero-img-label {
+  position: absolute;
+  bottom: 16px; left: 16px;
+  font-family: 'Oswald', sans-serif;
+  font-size: 10px; letter-spacing: 0.15em;
+  text-transform: uppercase; color: var(--gold);
+  opacity: 0.8; z-index: 3;
+  background: rgba(28,18,8,0.55);
+  padding: 4px 8px;
+}
+
+/* SECTION RULE */
+.section-rule {
+  display: flex; align-items: center; gap: 16px;
+  padding: 40px 60px 0;
+  margin-bottom: 32px;
+}
+.section-rule-line { flex: 1; height: 1px; background: var(--rule); }
+.section-label {
+  font-family: 'Oswald', sans-serif;
+  font-size: 10px; letter-spacing: 0.22em;
+  text-transform: uppercase; color: var(--sienna);
+  white-space: nowrap;
+}
+
+/* BODY */
+.page-body {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 0 40px 80px;
+}
+
+.intro-copy {
+  column-count: 2; column-gap: 48px;
+  column-rule: 1px solid var(--rule);
+  font-size: 16px; line-height: 1.8;
+  padding: 0 0 40px;
+  border-bottom: 2px solid var(--ink);
+  margin-bottom: 48px;
+}
+.intro-copy p + p { margin-top: 1em; }
+.intro-copy .drop-cap::first-letter {
+  font-family: 'Playfair Display', serif;
+  font-size: 4.5em; font-weight: 900;
+  float: left; line-height: 0.78;
+  margin-right: 8px; margin-top: 6px;
+  color: var(--sienna);
+}
+
+/* GALLERY */
+.gallery-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 3px; margin-bottom: 0;
+}
+.gallery-item {
+  position: relative;
+  aspect-ratio: 3/4;
+  overflow: hidden;
+  cursor: pointer;
+  background: #2a1f12;
+}
+.gallery-item img {
+  width: 100%; height: 100%;
+  object-fit: cover; display: block;
+  transition: transform 0.4s ease, filter 0.4s ease;
+  filter: sepia(15%) contrast(1.05);
+}
+.gallery-item:hover img {
+  transform: scale(1.04);
+  filter: sepia(0%) contrast(1.1);
+}
+.gallery-item-overlay {
+  position: absolute; inset: 0;
+  background: linear-gradient(to top, rgba(28,18,8,0.85) 0%, transparent 50%);
+  opacity: 0; transition: opacity 0.3s;
+  display: flex; align-items: flex-end; padding: 16px;
+}
+.gallery-item:hover .gallery-item-overlay { opacity: 1; }
+.gallery-item-label {
+  font-family: 'Oswald', sans-serif;
+  font-size: 12px; letter-spacing: 0.1em;
+  text-transform: uppercase; color: var(--gold);
+}
+.gallery-caption-bar {
+  background: var(--ink); color: var(--paper);
+  padding: 14px 20px;
+  font-family: 'Libre Baskerville', serif;
+  font-size: 13px; line-height: 1.5;
+  opacity: 0; min-height: 52px;
+  transition: opacity 0.3s;
+  border-top: 2px solid var(--amber);
+  margin-bottom: 40px;
+}
+.gallery-caption-bar.visible { opacity: 1; }
+.gallery-caption-bar strong {
+  font-family: 'Oswald', sans-serif;
+  letter-spacing: 0.05em; color: var(--gold);
+  font-size: 11px; text-transform: uppercase;
+  display: block; margin-bottom: 2px;
+}
+
+/* LIGHTBOX */
+.lightbox {
+  display: none; position: fixed; inset: 0; z-index: 1000;
+  background: rgba(28,18,8,0.94);
+  align-items: center; justify-content: center; padding: 40px;
+}
+.lightbox.open { display: flex; }
+.lightbox-inner {
+  max-width: 700px; width: 100%; position: relative;
+}
+.lightbox-inner img {
+  width: 100%; max-height: 75vh;
+  object-fit: contain; display: block;
+  border: 2px solid var(--amber);
+}
+.lightbox-caption {
+  background: var(--ink);
+  border: 1px solid var(--amber); border-top: none;
+  padding: 14px 18px; color: var(--paper);
+  font-size: 14px; line-height: 1.55;
+}
+.lightbox-caption strong {
+  font-family: 'Oswald', sans-serif; color: var(--gold);
+  font-size: 12px; letter-spacing: 0.1em;
+  text-transform: uppercase; display: block; margin-bottom: 4px;
+}
+.lightbox-close {
+  position: absolute; top: -40px; right: 0;
+  font-family: 'Oswald', sans-serif;
+  font-size: 11px; letter-spacing: 0.2em;
+  text-transform: uppercase; color: var(--gold);
+  background: none; border: none; cursor: pointer; padding: 4px 0;
+}
+.lightbox-nav {
+  display: flex; gap: 12px; margin-top: 12px; justify-content: center;
+}
+.lightbox-nav button {
+  font-family: 'Oswald', sans-serif;
+  font-size: 11px; letter-spacing: 0.15em; text-transform: uppercase;
+  background: none; border: 1px solid var(--amber);
+  color: var(--amber); padding: 6px 20px;
+  cursor: pointer; transition: all 0.2s;
+}
+.lightbox-nav button:hover { background: var(--amber); color: var(--ink); }
+
+/* MATRIX */
+.matrix-section { margin: 48px 0; }
+.matrix-header {
+  display: flex; align-items: baseline; gap: 24px;
+  margin-bottom: 24px;
+  border-bottom: 3px double var(--ink); padding-bottom: 10px;
+}
+.matrix-title {
+  font-family: 'Playfair Display', serif;
+  font-size: 26px; font-weight: 900;
+}
+.matrix-sub {
+  font-family: 'Oswald', sans-serif;
+  font-size: 11px; letter-spacing: 0.15em;
+  text-transform: uppercase; color: var(--sienna);
+}
+.matrix-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 2px; background: var(--ink);
+  border: 2px solid var(--ink);
+}
+.matrix-cell {
+  background: var(--cream); padding: 16px 14px;
+  cursor: pointer; transition: background 0.2s;
+  position: relative; min-height: 90px;
+}
+.matrix-cell:hover { background: var(--paper-dark); }
+.matrix-cell.featured {
+  background: var(--sienna); color: var(--cream);
+  grid-column: span 2;
+}
+.matrix-cell.featured:hover { background: #a03d1a; }
+.matrix-cell-num {
+  font-family: 'Oswald', sans-serif;
+  font-size: 28px; font-weight: 600;
+  opacity: 0.18; position: absolute;
+  top: 8px; right: 12px; line-height: 1;
+}
+.matrix-cell.featured .matrix-cell-num { opacity: 0.25; font-size: 48px; top: 10px; }
+.matrix-cell-title {
+  font-family: 'Oswald', sans-serif;
+  font-size: 12px; font-weight: 600;
+  letter-spacing: 0.05em; text-transform: uppercase;
+  line-height: 1.3; margin-bottom: 4px;
+}
+.matrix-cell.featured .matrix-cell-title { font-size: 15px; color: var(--gold); }
+.matrix-cell-preview {
+  font-family: 'Libre Baskerville', serif;
+  font-size: 11.5px; line-height: 1.5; opacity: 0.65;
+}
+.matrix-cell.featured .matrix-cell-preview { opacity: 0.88; font-size: 13px; }
+.matrix-detail {
+  background: var(--ink); color: var(--paper);
+  border-top: 3px solid var(--amber);
+  padding: 28px 32px; display: none; margin-top: 2px;
+}
+.matrix-detail.open { display: block; }
+.matrix-detail h3 {
+  font-family: 'Playfair Display', serif;
+  font-size: 22px; color: var(--gold); margin-bottom: 10px;
+}
+.matrix-detail p {
+  font-size: 15px; line-height: 1.75; opacity: 0.85; max-width: 700px;
+}
+.matrix-detail-tag {
+  font-family: 'Oswald', sans-serif;
+  font-size: 10px; letter-spacing: 0.2em;
+  text-transform: uppercase; color: var(--amber); margin-bottom: 8px;
+}
+
+/* TLX */
+.tlx-section { margin: 48px 0; }
+.tlx-header {
+  background: var(--ink); color: var(--paper);
+  padding: 24px 32px;
+  display: flex; align-items: baseline; gap: 20px;
+  border-bottom: 3px solid var(--amber);
+}
+.tlx-title {
+  font-family: 'Playfair Display', serif;
+  font-size: 22px; font-weight: 900;
+}
+.tlx-sub {
+  font-family: 'Oswald', sans-serif;
+  font-size: 10px; letter-spacing: 0.2em;
+  text-transform: uppercase; color: var(--gold);
+}
+.tlx-body {
+  background: var(--cream);
+  border: 2px solid var(--ink); border-top: none;
+  padding: 28px 32px;
+}
+.tlx-tabs {
+  display: flex; margin-bottom: 28px;
+  border-bottom: 2px solid var(--ink);
+}
+.tlx-tab {
+  font-family: 'Oswald', sans-serif;
+  font-size: 11px; letter-spacing: 0.15em; text-transform: uppercase;
+  padding: 10px 28px; background: var(--paper-dark);
+  border: none; cursor: pointer;
+  border-right: 1px solid var(--ink);
+  transition: all 0.2s; color: var(--ink);
+}
+.tlx-tab.active { background: var(--ink); color: var(--amber); }
+.tlx-scales { display: none; }
+.tlx-scales.active { display: block; }
+.tlx-scale {
+  display: grid;
+  grid-template-columns: 180px 1fr 60px;
+  align-items: center; gap: 16px;
+  margin-bottom: 18px; padding-bottom: 18px;
+  border-bottom: 1px solid var(--rule);
+}
+.tlx-scale:last-child { border-bottom: none; }
+.tlx-scale-label {
+  font-family: 'Oswald', sans-serif;
+  font-size: 12px; font-weight: 600;
+  letter-spacing: 0.05em; text-transform: uppercase;
+}
+.tlx-scale-desc {
+  font-size: 10px; opacity: 0.55;
+  font-family: 'Libre Baskerville', serif;
+  font-style: italic; margin-top: 2px;
+}
+.tlx-slider {
+  -webkit-appearance: none;
+  width: 100%; height: 4px;
+  background: var(--paper-dark); outline: none;
+  border-radius: 0; cursor: pointer;
+}
+.tlx-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 16px; height: 16px;
+  background: var(--sienna); border-radius: 0;
+  cursor: pointer; border: 2px solid var(--ink);
+}
+.tlx-val {
+  font-family: 'Oswald', sans-serif;
+  font-size: 18px; font-weight: 600;
+  text-align: right; color: var(--sienna); min-width: 48px;
+}
+.tlx-result {
+  background: var(--ink); color: var(--paper);
+  padding: 20px 24px; margin-top: 24px;
+  display: flex; align-items: center;
+  justify-content: space-between; flex-wrap: wrap; gap: 12px;
+}
+.tlx-score-label {
+  font-family: 'Oswald', sans-serif;
+  font-size: 11px; letter-spacing: 0.18em;
+  text-transform: uppercase; color: var(--amber);
+}
+.tlx-score-val {
+  font-family: 'Playfair Display', serif;
+  font-size: 42px; font-weight: 900; color: var(--gold);
+}
+.tlx-score-interp {
+  font-family: 'Libre Baskerville', serif;
+  font-size: 13px; font-style: italic;
+  opacity: 0.75; max-width: 320px;
+}
+
+/* RADAR */
+.radar-section { margin: 48px 0; }
+.radar-wrap {
+  display: grid;
+  grid-template-columns: 1fr 300px;
+  gap: 32px; align-items: start;
+}
+.radar-legend { padding-top: 40px; }
+.radar-legend-item {
+  display: flex; align-items: center; gap: 10px;
+  margin-bottom: 12px;
+  font-family: 'Oswald', sans-serif;
+  font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase;
+}
+.radar-note {
+  font-family: 'Libre Baskerville', serif;
+  font-size: 12px; font-style: italic; opacity: 0.6;
+  line-height: 1.6; margin-top: 20px; padding-top: 16px;
+  border-top: 1px solid var(--rule);
+}
+
+/* PULL QUOTE */
+.pull-quote {
+  border-left: 5px solid var(--sienna);
+  padding: 20px 28px; margin: 40px 0;
+  background: var(--paper-dark);
+}
+.pull-quote p {
+  font-family: 'Playfair Display', serif;
+  font-size: 20px; font-style: italic;
+  line-height: 1.5; color: var(--sienna);
+}
+.pull-quote cite {
+  display: block; margin-top: 8px;
+  font-family: 'Oswald', sans-serif;
+  font-size: 10px; letter-spacing: 0.15em;
+  text-transform: uppercase; color: var(--ink); opacity: 0.5;
+}
+
+footer {
+  background: var(--ink); color: var(--paper);
+  padding: 28px 60px;
+  display: flex; align-items: center; justify-content: space-between;
+  border-top: 3px solid var(--amber);
+}
+.footer-course {
+  font-family: 'Oswald', sans-serif;
+  font-size: 10px; letter-spacing: 0.2em;
+  text-transform: uppercase; opacity: 0.5;
+}
+.footer-logo {
+  font-family: 'Playfair Display', serif;
+  font-size: 14px; font-weight: 900;
+  letter-spacing: 0.05em; color: var(--gold);
+}
+
+@media (max-width: 768px) {
+  .cover { grid-template-columns: 1fr; }
+  .cover-hero-img { height: 280px; }
+  .matrix-grid { grid-template-columns: repeat(2,1fr); }
+  .matrix-cell.featured { grid-column: span 2; }
+  .intro-copy { column-count: 1; }
+  .gallery-grid { grid-template-columns: repeat(2,1fr); }
+  .radar-wrap { grid-template-columns: 1fr; }
+  .section-rule { padding: 40px 20px 0; }
+  .page-body { padding: 0 20px 80px; }
+}
+</style>
+</head>
+<body>
+
+<header class="masthead">
+  <span class="masthead-vol">Vol. 1 &nbsp;·&nbsp; Human Factors Psychology &nbsp;·&nbsp; UCO</span>
+  <span class="masthead-title">Field Analysis: ADA Ingress/Egress · Historic Building Campus Study</span>
+</header>
+
+<section class="cover">
+  <div class="cover-text">
+    <div class="cover-eyebrow">Human Factors Field Study</div>
+    <h1 class="cover-headline">
+      The Space<br>Between<br><em>Access &amp; Entry</em>
+    </h1>
+    <p class="cover-deck">
+      A human factors analysis of an ADA-compliant ingress/egress retrofit in a historic campus building — examining workload, affordance, and the emotional geometry of designed access.
+    </p>
+    <div class="cover-byline">Psychology of Human Factors &nbsp;·&nbsp; Workplace Environment Analysis &nbsp;·&nbsp; NASA-TLX Assessment</div>
+  </div>
+  <div class="cover-hero-img">
+    <img src="real hero.png" alt="ADA Ramp Site Study — Architectural Sketch">
+    <span class="hero-img-label">Site Study — Ramp Elevation</span>
+  </div>
+</section>
+
+<div class="section-rule">
+  <span class="section-rule-line"></span>
+  <span class="section-label">Introduction</span>
+  <span class="section-rule-line"></span>
+</div>
+
+<div class="page-body">
+  <div class="intro-copy">
+    <p class="drop-cap">Human factors engineering occupies an unusual position in the built environment: it is most visible precisely where it falls short. A door too heavy to open, a ramp that demands more of the body than necessary, a sign placed where no one looks — each is a legible failure of the discipline's core promise, that systems should bend to the human, not the reverse.</p>
+    <p>This analysis focuses on the accessible ingress/egress of a historic building on the University of Central Oklahoma campus. The site presents a characteristic tension: the building predates modern ADA standards, and its retrofit accommodates code compliance without being designed, in any deep sense, for the people who use it.</p>
+    <p>Using the NASA Task Load Index (NASA-TLX), I assessed subjective workload on both entry and exit traversals. The 13 foundational principles of Human Factors &amp; Ergonomics serve as the evaluative framework, with particular attention to how aesthetics and emotional experience mediate functional performance — a dimension that technical compliance metrics cannot capture.</p>
+    <p>The Dirty Dozen human error precursors are implicitly operative throughout: complacency in signage placement, lack of awareness in surface gradient design, fatigue amplification in door hardware. A space that demands sustained vigilance from its users has already failed the primary mandate of human-centered design.</p>
+  </div>
+
+  <div class="section-rule" style="padding:0 0 0 0; margin-bottom: 20px;">
+    <span class="section-rule-line"></span>
+    <span class="section-label">Field Documentation</span>
+    <span class="section-rule-line"></span>
+  </div>
+
+  <div class="gallery-grid" id="galleryGrid"></div>
+  <div class="gallery-caption-bar" id="captionBar">
+    <strong id="captionTitle">Hover a photo to read field notes</strong>
+    <span id="captionText"></span>
+  </div>
+
+  <div class="lightbox" id="lightbox">
+    <div class="lightbox-inner">
+      <button class="lightbox-close" onclick="closeLightbox()">✕ Close</button>
+      <img id="lightboxImg" src="" alt="">
+      <div class="lightbox-caption">
+        <strong id="lightboxTitle"></strong>
+        <span id="lightboxCaption"></span>
+      </div>
+      <div class="lightbox-nav">
+        <button onclick="navLightbox(-1)">← Previous</button>
+        <button onclick="navLightbox(1)">Next →</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="pull-quote">
+    <p>"A retrofit ADA entrance tells the user exactly what the building thinks of them. Good human factors design makes that statement worth reading."</p>
+    <cite>— Field Observation, Site Analysis</cite>
+  </div>
+
+  <div class="matrix-section">
+    <div class="matrix-header">
+      <span class="matrix-title">The 13 Principles</span>
+      <span class="matrix-sub">HFE Evaluation Framework — Click any cell to expand</span>
+    </div>
+    <div class="matrix-grid" id="matrixGrid"></div>
+    <div class="matrix-detail" id="matrixDetail">
+      <div class="matrix-detail-tag" id="detailTag"></div>
+      <h3 id="detailTitle"></h3>
+      <p id="detailBody"></p>
+    </div>
+  </div>
+
+  <div class="tlx-section">
+    <div class="tlx-header">
+      <span class="tlx-title">NASA Task Load Index</span>
+      <span class="tlx-sub">Subjective Workload Assessment · Entry &amp; Exit Traversal</span>
+    </div>
+    <div class="tlx-body">
+      <div class="tlx-tabs">
+        <button class="tlx-tab active" onclick="switchTLX('entry', this)">Entry Traversal</button>
+        <button class="tlx-tab" onclick="switchTLX('exit', this)">Exit Traversal</button>
+      </div>
+      <div class="tlx-scales active" id="tlx-entry"></div>
+      <div class="tlx-scales" id="tlx-exit"></div>
+      <div class="tlx-result">
+        <div>
+          <div class="tlx-score-label">Raw TLX Score</div>
+          <div class="tlx-score-val" id="tlxScoreVal">—</div>
+        </div>
+        <div class="tlx-score-interp" id="tlxInterp">Adjust the sliders above to calculate workload score.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="radar-section">
+    <div class="section-rule" style="padding:0 0 0 0; margin-bottom: 20px;">
+      <span class="section-rule-line"></span>
+      <span class="section-label">Workload Comparison — Entry vs. Exit</span>
+      <span class="section-rule-line"></span>
+    </div>
+    <div class="radar-wrap">
+      <div id="radarChart"></div>
+      <div class="radar-legend">
+        <div class="radar-legend-item">
+          <div style="width:16px;height:3px;background:#8b3a1a;flex-shrink:0;"></div>
+          Entry Traversal
+        </div>
+        <div class="radar-legend-item">
+          <div style="width:16px;height:3px;border-top:2px dashed #c8850a;flex-shrink:0;"></div>
+          Exit Traversal
+        </div>
+        <div class="radar-note">
+          Radar chart updates live as you adjust the NASA-TLX sliders above. Physical Demand and Effort dimensions show the largest divergence between entry and exit — consistent with directional asymmetry in the ramp gradient.
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<footer>
+  <span class="footer-course">Human Factors Psychology &nbsp;·&nbsp; University of Central Oklahoma &nbsp;·&nbsp; Spring 2025</span>
+  <span class="footer-logo">HFE Field Study</span>
+</footer>
+
+<script>
+const PHOTOS = [
+  { src: `Gemini_Generated_Image_ug8wzwug8wzwug8w.png`, title: `Approach Path`, caption: `The accessible route approaches the building through a landscaped corridor. Path width, surface texture, and cross-slope all bear on ADA compliance and pedestrian workload.` },
+  { src: `Gemini_Generated_Image_i9oauji9oauji9oa.png`, title: `ADA Wayfinding Sign`, caption: `A freestanding accessible route sign with ISA symbol and directional arrow. Signifier clarity — principle #6 — is the primary HFE consideration at this node.` },
+  { src: `Gemini_Generated_Image_pkcoiqpkcoiqpkco.png`, title: `Ramp & Bilateral Handrails`, caption: `The primary accessible ramp with continuous bilateral handrails. This is the core ingress/egress element analyzed in the NASA-TLX task load assessment.` },
+  { src: `Gemini_Generated_Image_2slld62slld62sll.png`, title: `Narrow Transition Zone`, caption: `A constrained passage where the path narrows between architectural features. The handrail gap and reduced clearance increase physical demand and temporal pressure.` },
+  { src: `Gemini_Generated_Image_z12f9nz12f9nz12f.png`, title: `Entry Threshold & Power-Assist Button`, caption: `The door itself, with power-assist actuator button visible at left. Affordance design on that button is a direct test of principle #6 in a real ADA application.` },
+];
+
+
+// GALLERY
+const grid = document.getElementById('galleryGrid');
+const captionBar = document.getElementById('captionBar');
+const captionTitle = document.getElementById('captionTitle');
+const captionText = document.getElementById('captionText');
+let currentLightbox = 0;
+
+PHOTOS.forEach((p, i) => {
+  const item = document.createElement('div');
+  item.className = 'gallery-item';
+  const img = document.createElement('img');
+  img.src = p.src;
+  img.alt = p.title;
+  img.loading = 'lazy';
+  const overlay = document.createElement('div');
+  overlay.className = 'gallery-item-overlay';
+  const lbl = document.createElement('span');
+  lbl.className = 'gallery-item-label';
+  lbl.textContent = p.title;
+  overlay.appendChild(lbl);
+  item.appendChild(img);
+  item.appendChild(overlay);
+  item.addEventListener('mouseenter', () => {
+    captionTitle.textContent = p.title;
+    captionText.textContent = p.caption;
+    captionBar.classList.add('visible');
+  });
+  item.addEventListener('mouseleave', () => captionBar.classList.remove('visible'));
+  item.addEventListener('click', () => openLightbox(i));
+  grid.appendChild(item);
+});
+
+function openLightbox(i) {
+  currentLightbox = i;
+  document.getElementById('lightboxImg').src = PHOTOS[i].src;
+  document.getElementById('lightboxTitle').textContent = PHOTOS[i].title;
+  document.getElementById('lightboxCaption').textContent = PHOTOS[i].caption;
+  document.getElementById('lightbox').classList.add('open');
+}
+function closeLightbox() {
+  document.getElementById('lightbox').classList.remove('open');
+}
+function navLightbox(dir) {
+  currentLightbox = (currentLightbox + dir + PHOTOS.length) % PHOTOS.length;
+  openLightbox(currentLightbox);
+}
+document.getElementById('lightbox').addEventListener('click', function(e) {
+  if (e.target === this) closeLightbox();
+});
+
+// 13 PRINCIPLES
+const PRINCIPLES = [
+  { num:1, title:"User-Centered Design", short:"Iterative design involving end-users.", body:"Emphasizes involving end-users throughout the design process to ensure systems and products are tailored to their needs, preferences, and capabilities. The ADA retrofit at this site was compliance-driven rather than user-centered: the path exists because law requires it, not because someone studied how users actually move through the space." },
+  { num:2, title:"Visibility & Feedback", short:"Clear, timely system response cues.", body:"Systems should provide clear and timely feedback to users about their actions. At this site, the automatic door's power-assist button is the only meaningful feedback mechanism. The ramp itself provides no feedback on completion proximity — a user cannot see the landing until they are nearly upon it." },
+  { num:3, title:"Consistency & Standardization", short:"Familiar patterns reduce cognitive load.", body:"Consistent design elements and standardized interfaces help users quickly learn and operate new systems. The ADA signage at this site conforms to federal standards — ISA symbol, arrow direction, accessible route language — which aids legibility for first-time users. Standardization here functions well." },
+  { num:4, title:"Simplicity & Minimalism", short:"Reduce unnecessary complexity.", body:"Design should prioritize simplicity and minimize unnecessary complexity. The path from street to entry involves three distinct decision points (sign, ramp entry, door), each with potential for confusion. Reducing the perceptual burden of this sequence would lower cognitive demand significantly." },
+  { num:5, title:"Error Management", short:"Prevent, detect, recover from errors.", body:"Design systems that prevent, detect, and enable recovery from errors. The primary error risk at this site is a misstep on the ramp surface, particularly in wet conditions. Surface texture and handrail continuity are the primary error-prevention elements. A gap in handrail coverage near the narrow transition zone is a notable failure point." },
+  { num:6, title:"Affordances & Signifiers", short:"Design cues that guide interaction.", body:"Affordances suggest how objects can be used; signifiers communicate these possibilities explicitly. The power-assist button is the site's most critical signifier — and its placement on a non-contrasting surface, at mid-torso height on a recessed wall, reduces its affordance for users with visual impairments or limited mobility range." },
+  { num:7, title:"Human-Machine Interaction", short:"Align with cognitive/physical limits.", body:"Design interactions that align with human cognitive and physical capabilities. The door mechanism demands coordinated multi-limb action: press button, wait for swing initiation, pass through, clear swing radius. For wheelchair users, the timing window between button press and door reach requires precise pacing that assumes intact motor planning." },
+  { num:8, title:"Workload Management", short:"Distribute cognitive/physical load.", body:"NASA-TLX assessment of this site revealed elevated physical demand and frustration on entry relative to exit — likely due to the uphill gradient and the heavy door. Workload is not distributed; it is concentrated at the most demanding moment of entry." },
+  { num:9, title:"Task Analysis", short:"Break tasks into analyzable steps.", body:"The entry sequence can be decomposed into: locate sign → follow route → negotiate ramp → actuate door → pass threshold. Each step carries its own demand profile. The ramp-to-door transition is the highest-demand sub-task and the least forgiving of error." },
+  { num:10, title:"Physical Ergonomics", short:"Anthropometrics, biomechanics, comfort.", body:"The ramp width (nominally compliant at 36 inches) permits single-occupancy passage but does not accommodate simultaneous two-way traffic for wheelchair users. The handrail height and diameter fall within ADA specifications, though the grip profile is cylindrical rather than the preferred oval cross-section." },
+  { num:11, title:"Cognitive Ergonomics", short:"Support mental processes in design.", body:"The route to this entrance is not visible from the building's primary facade — it requires prior knowledge or sign-following through a courtyard. For a first-time user, this introduces navigational uncertainty that elevates cognitive load before physical traversal even begins." },
+  { num:12, title:"Human Reliability", short:"Redundancy and fail-safes for safety.", body:"The power-assist button represents the only powered accessibility intervention at this site. There is no backup — manual override is a standard pull-weight door. For users dependent on power assist, a button failure creates complete access denial. Redundancy is absent." },
+  { num:13, title:"Aesthetics & Emotion", short:"Emotional impact of design on users.", body:"This principle warrants the most extended treatment at this site. The accessible entrance is tucked behind the building, approached through a service-adjacent courtyard, marked by industrial railing in a space otherwise landscaped for visual interest. The aesthetic message is legible: this entrance is an accommodation, not a welcome. Research on emotional response to built environments (Norman's visceral/behavioral/reflective triad) suggests that the affective dimension of access — how it feels to be directed around the back — may be the most consequential human factors failure at this site, and the one least captured by compliance metrics.", featured: true },
+];
+
+const matrixEl = document.getElementById('matrixGrid');
+const detailEl = document.getElementById('matrixDetail');
+let openCell = null;
+
+PRINCIPLES.forEach(p => {
+  const cell = document.createElement('div');
+  cell.className = 'matrix-cell' + (p.featured ? ' featured' : '');
+  cell.innerHTML = `
+    <div class="matrix-cell-num">${p.num}</div>
+    <div class="matrix-cell-title">${p.title}</div>
+    <div class="matrix-cell-preview">${p.short}</div>
+  `;
+  cell.addEventListener('click', () => {
+    if (openCell === p.num) {
+      detailEl.classList.remove('open');
+      openCell = null;
+    } else {
+      document.getElementById('detailTag').textContent = `Principle ${p.num} of 13`;
+      document.getElementById('detailTitle').textContent = p.title;
+      document.getElementById('detailBody').textContent = p.body;
+      detailEl.classList.add('open');
+      openCell = p.num;
+      detailEl.scrollIntoView({behavior:'smooth', block:'nearest'});
+    }
+  });
+  matrixEl.appendChild(cell);
+});
+
+// NASA TLX
+const TLX_SCALES = [
+  { id:'mental',      label:'Mental Demand',   desc:'How much mental/perceptual activity was required?' },
+  { id:'physical',    label:'Physical Demand',  desc:'How much physical activity was required?' },
+  { id:'temporal',    label:'Temporal Demand',  desc:'How much time pressure did you feel?' },
+  { id:'performance', label:'Performance',      desc:'How successful were you? (0=perfect, 100=failure)' },
+  { id:'effort',      label:'Effort',           desc:'How hard did you work to accomplish the task?' },
+  { id:'frustration', label:'Frustration',      desc:'How irritated, stressed, or annoyed did you feel?' },
+];
+
+const TLX_DEFAULTS = {
+  entry: { mental:25, physical:55, temporal:30, performance:20, effort:60, frustration:45 },
+  exit:  { mental:20, physical:40, temporal:20, performance:15, effort:45, frustration:30 },
+};
+
+function buildTLX(condition) {
+  const el = document.getElementById(`tlx-${condition}`);
+  TLX_SCALES.forEach(s => {
+    const val = TLX_DEFAULTS[condition][s.id];
+    el.innerHTML += `
+      <div class="tlx-scale">
+        <div>
+          <div class="tlx-scale-label">${s.label}</div>
+          <div class="tlx-scale-desc">${s.desc}</div>
+        </div>
+        <input type="range" class="tlx-slider" min="0" max="100" step="5"
+          value="${val}" id="${condition}-${s.id}"
+          oninput="updateTLX('${condition}')">
+        <div class="tlx-val" id="${condition}-${s.id}-val">${val}</div>
+      </div>`;
+  });
+}
+
+buildTLX('entry');
+buildTLX('exit');
+
+let activeTLX = 'entry';
+function switchTLX(cond, btn) {
+  activeTLX = cond;
+  document.querySelectorAll('.tlx-scales').forEach(el => el.classList.remove('active'));
+  document.querySelectorAll('.tlx-tab').forEach(b => b.classList.remove('active'));
+  document.getElementById(`tlx-${cond}`).classList.add('active');
+  btn.classList.add('active');
+  updateTLX(cond);
+}
+
+function getTLXValues(cond) {
+  return TLX_SCALES.map(s => parseInt(document.getElementById(`${cond}-${s.id}`).value));
+}
+
+function updateTLX(cond) {
+  TLX_SCALES.forEach(s => {
+    const v = document.getElementById(`${cond}-${s.id}`).value;
+    document.getElementById(`${cond}-${s.id}-val`).textContent = v;
+  });
+  const vals = getTLXValues(cond);
+  const score = Math.round(vals.reduce((a,b) => a+b,0) / vals.length);
+  document.getElementById('tlxScoreVal').textContent = score;
+  const interps = [
+    [0,20,'Very Low — minimal workload, highly efficient traversal.'],
+    [21,40,'Low — manageable demand, some minor friction points.'],
+    [41,60,'Moderate — noticeable workload; multiple demand dimensions active.'],
+    [61,80,'High — significant stress on user capacity; design intervention warranted.'],
+    [81,100,'Very High — system is working against the user.'],
+  ];
+  const interp = interps.find(([lo,hi]) => score >= lo && score <= hi);
+  document.getElementById('tlxInterp').textContent = interp ? interp[2] : '';
+  updateRadar();
+}
+
+updateTLX('entry');
+
+// D3 RADAR
+function updateRadar() {
+  const entryVals = getTLXValues('entry');
+  const exitVals  = getTLXValues('exit');
+  const labels = TLX_SCALES.map(s => s.label.split(' ')[0]);
+
+  d3.select('#radarChart').selectAll('*').remove();
+
+  const W=400, H=380, cx=W/2, cy=H/2, R=150, n=labels.length;
+  const svg = d3.select('#radarChart').append('svg')
+    .attr('viewBox',`0 0 ${W} ${H}`)
+    .style('width','100%').style('max-width','420px');
+
+  const angle = i => (i/n)*2*Math.PI - Math.PI/2;
+  const sc    = v => (v/100)*R;
+  const px    = (v,i) => cx + sc(v)*Math.cos(angle(i));
+  const py    = (v,i) => cy + sc(v)*Math.sin(angle(i));
+
+  [20,40,60,80,100].forEach(r => {
+    const pts = labels.map((_,i) => `${cx+(r/100)*R*Math.cos(angle(i))},${cy+(r/100)*R*Math.sin(angle(i))}`).join(' ');
+    svg.append('polygon').attr('points',pts).attr('fill','none')
+      .attr('stroke','#8b3a1a').attr('stroke-width',0.5).attr('opacity',0.2);
+    svg.append('text').attr('x',cx+2).attr('y',cy-(r/100)*R-3)
+      .text(r).attr('fill','#8b3a1a').attr('font-size',9)
+      .attr('font-family','monospace').attr('opacity',0.4);
+  });
+
+  labels.forEach((_,i) => {
+    svg.append('line')
+      .attr('x1',cx).attr('y1',cy)
+      .attr('x2',cx+R*Math.cos(angle(i))).attr('y2',cy+R*Math.sin(angle(i)))
+      .attr('stroke','#8b3a1a').attr('stroke-width',0.8).attr('opacity',0.25);
+  });
+
+  labels.forEach((lbl,i) => {
+    const lx = cx+(R+24)*Math.cos(angle(i));
+    const ly = cy+(R+24)*Math.sin(angle(i));
+    svg.append('text').attr('x',lx).attr('y',ly)
+      .text(lbl).attr('text-anchor','middle').attr('dominant-baseline','middle')
+      .attr('fill','#1c1208').attr('font-size',11)
+      .attr('font-family','Oswald, sans-serif').attr('letter-spacing','0.05em');
+  });
+
+  function drawArea(vals, color, dashed) {
+    const pts = vals.map((v,i) => `${px(v,i)},${py(v,i)}`).join(' ');
+    svg.append('polygon').attr('points',pts).attr('fill',color).attr('opacity',0.12);
+    svg.append('polygon').attr('points',pts).attr('fill','none')
+      .attr('stroke',color).attr('stroke-width',2)
+      .attr('stroke-dasharray', dashed ? '6,3' : 'none').attr('opacity',0.85);
+    vals.forEach((v,i) => {
+      svg.append('circle').attr('cx',px(v,i)).attr('cy',py(v,i)).attr('r',4)
+        .attr('fill',color).attr('opacity',0.9);
+    });
+  }
+
+  drawArea(entryVals,'#8b3a1a',false);
+  drawArea(exitVals,'#c8850a',true);
+}
+
+updateRadar();
+</script>
+</body>
+</html>
